@@ -296,6 +296,14 @@ def gateway(
     config: str | None = typer.Option(None, "--config", "-c", help="Path to config file"),
 ):
     """Start the nanobot gateway."""
+    # Pterodactyl / container: read from env if not overridden by CLI
+    if "SERVER_PORT" in os.environ:
+        try:
+            port = int(os.environ["SERVER_PORT"])
+        except ValueError:
+            pass
+    if config is None and "NANOBOT_CONFIG" in os.environ:
+        config = os.environ["NANOBOT_CONFIG"]
     from nanobot.agent.loop import AgentLoop
     from nanobot.bus.queue import MessageBus
     from nanobot.channels.manager import ChannelManager
@@ -448,16 +456,27 @@ def gateway(
 
     console.print(f"[green]✓[/green] Heartbeat: every {hb_cfg.interval_s}s")
 
+    # Graceful shutdown on SIGTERM (e.g. from Pterodactyl panel)
+    def _sigterm_handler(_signum: int, _frame: object) -> None:
+        raise SystemExit(0)
+
+    if hasattr(signal, "SIGTERM"):
+        signal.signal(signal.SIGTERM, _sigterm_handler)
+
     async def run():
         try:
             await cron.start()
             await heartbeat.start()
+            console.print(f"[green]✓[/green] nanobot gateway ready on port {port}")
             await asyncio.gather(
                 agent.run(),
                 channels.start_all(),
             )
         except KeyboardInterrupt:
             console.print("\nShutting down...")
+        except SystemExit:
+            console.print("\nShutting down...")
+            raise  # Re-raise to preserve exit code for Pterodactyl
         finally:
             await agent.close_mcp()
             heartbeat.stop()

@@ -1,0 +1,58 @@
+{
+  "_comment": "Pterodactyl Egg for Nanobot AI Gateway - Uses Python, clones from https://github.com/KCCHDEV/nanobot-nagamicloud",
+  "meta": {
+    "version": "PTDL_v1",
+    "update_url": null
+  },
+  "exported_at": "2026-03-09T00:00:00Z",
+  "name": "Nanobot AI Gateway",
+  "author": "nanobot contributors",
+  "description": "Nanobot - Ultra-lightweight personal AI assistant with multi-channel support (Telegram, Discord, Slack, etc.). Clones from KCCHDEV/nanobot-nagamicloud and uses Python.",
+  "features": null,
+  "images": [
+    "ghcr.io/pterodactyl/yolks:python_3.12"
+  ],
+  "startup": "if [ -d .git ] && [ \"{{AUTO_UPDATE}}\" = \"1\" ]; then git pull && pip install -e .; fi; if [ ! -d nanobot ] || [ ! -f pyproject.toml ]; then git clone --depth 1 {{GIT_REPO}} . && pip install -e .; fi; nanobot gateway --port {{SERVER_PORT}} --config {{NANOBOT_CONFIG}}",
+  "config": {
+    "files": "{}",
+    "startup": "{\"done\": \"nanobot gateway ready\", \"userInteraction\": []}",
+    "logs": "{\"custom\": false}",
+    "stop": "^C"
+  },
+  "scripts": {
+    "installation": {
+      "script": "#!/bin/bash\ncd /home/container\nif [ ! -d \"nanobot\" ] || [ ! -f \"pyproject.toml\" ]; then\n  git clone --depth 1 https://github.com/KCCHDEV/nanobot-nagamicloud .\nfi\npip install -e .",
+      "container": "ghcr.io/pterodactyl/yolks:python_3.12",
+      "entrypoint": "bash"
+    }
+  },
+  "variables": [
+    {
+      "name": "Config Path",
+      "description": "Path to nanobot config.json. Use /home/container/config.json to store config in server files.",
+      "env_variable": "NANOBOT_CONFIG",
+      "default_value": "/home/container/config.json",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string"
+    },
+    {
+      "name": "Git Repository",
+      "description": "Git URL to clone. Default: KCCHDEV/nanobot-nagamicloud.",
+      "env_variable": "GIT_REPO",
+      "default_value": "https://github.com/KCCHDEV/nanobot-nagamicloud",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string"
+    },
+    {
+      "name": "Auto Update",
+      "description": "Pull latest changes on startup (1=yes, 0=no).",
+      "env_variable": "AUTO_UPDATE",
+      "default_value": "0",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string"
+    }
+  ]
+}

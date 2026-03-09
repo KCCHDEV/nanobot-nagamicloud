@@ -1,6 +1,7 @@
 """Configuration loading utilities."""
 
 import json
+import os
 from pathlib import Path
 
 from nanobot.config.schema import Config
@@ -20,6 +21,9 @@ def get_config_path() -> Path:
     """Get the configuration file path."""
     if _current_config_path:
         return _current_config_path
+    # Pterodactyl / container: NANOBOT_CONFIG env overrides default
+    if "NANOBOT_CONFIG" in os.environ:
+        return Path(os.environ["NANOBOT_CONFIG"]).expanduser().resolve()
     return Path.home() / ".nanobot" / "config.json"
 
 
